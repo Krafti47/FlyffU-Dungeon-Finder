@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dungeon Finder — Flyff Universe</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold:        #c8a030;
+  --gold2:       #d4a832;
+  --goldbright:  #ffd84a;
+  --goldborder:  #7a5e14;
+  --goldborder2: #b08820;
+  --goldtext:    #f0c040;
+  --bg:          #080807;
+  --bgwin:       #0d0d0b;
+  --bgtb:        #111008;
+  --bgpanel:     #0a0a08;
+  --bgrow1:      #0d0d0b;
+  --bgrow2:      #0b0b09;
+  --bghover:     #161508;
+  --bghdr:       #131310;
+  --bgbtn:       #141208;
+  --bginput:     #090908;
+  --bwin:        #6a5010;
+  --b1:          #6a5010;
+  --b2:          #a07818;
+  --tw:          #dedad0;
+  --tc:          #b8a860;
+  --tm:          #60543c;
+  --td:          #302c1c;
+  --tg:          #f0c040;
+  --green:       #48a838;
+  --red:         #c04040;
+  --redt:        #d06868;
+}
+html,body { height:100%; background:var(--bg); font-family:'Segoe UI',Tahoma,Geneva,sans-serif; font-size:13px; color:var(--tw); }
+body { display:flex; align-items:flex-start; justify-content:center; padding:16px; }
+
+.win { width:940px; max-width:100%; background:var(--bgwin); border:2px solid var(--bwin); border-radius:3px; box-shadow:0 0 0 1px rgba(200,160,48,0.08), 0 16px 48px rgba(0,0,0,0.85); }
+
+/* titlebar */
+.tb { background:#0f0e08; border-bottom:2px solid var(--b2); padding:5px 12px; display:flex; align-items:center; justify-content:space-between; }
+.tb-l { display:flex; flex-direction:column; }
+.tb-title { font-size:13px; font-weight:bold; color:var(--tg); letter-spacing:.04em; }
+.tb-sub { font-size:12px; color:var(--tm); margin-top:1px; }
+.tb-r { font-size:11px; color:var(--tm); display:flex; align-items:center; gap:6px; }
+.sdot { width:7px; height:7px; border-radius:50%; background:var(--green); display:inline-block; }
+
+/* tabs */
+.tabs { display:flex; background:#090907; border-bottom:2px solid var(--b1); }
+.tab { padding:7px 20px; font-size:14px; cursor:pointer; color:var(--tm); border-right:1px solid var(--b1); background:#080806; transition:all .1s; user-select:none; }
+.tab:hover { color:var(--tg); background:#0f0e08; }
+.tab.on { color:var(--tg); background:#111008; border-bottom:2px solid var(--gold2); margin-bottom:-2px; font-weight:bold; }
+
+/* layout */
+.layout { display:flex; min-height:460px; }
+.sidebar { width:148px; min-width:148px; background:#080806; border-right:1px solid var(--b1); padding:4px 0; overflow-y:auto; }
+.sb-hd { padding:5px 8px 3px; font-size:11px; font-weight:bold; color:var(--tc); cursor:pointer; user-select:none; }
+.sb-hd:hover { color:var(--tg); }
+.sb-item { padding:6px 8px 6px 16px; font-size:14px; color:var(--tw); cursor:pointer; transition:background .08s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-item:hover { background:#131108; color:var(--tw); }
+.sb-item.on { color:var(--tg); background:#141208; }
+.sb-sep { border-top:1px solid var(--b1); margin:5px 0; }
+
+.main { flex:1; display:flex; flex-direction:column; min-width:0; }
+
+/* toolbar */
+.toolbar { background:#0a0a08; border-bottom:1px solid var(--b1); padding:6px 12px; display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+
+/* table */
+.colhdr { display:grid; background:var(--bghdr); border-bottom:1px solid var(--b1); }
+.ch { padding:5px 8px; font-size:11px; color:var(--tc); font-weight:bold; border-right:1px solid rgba(110,80,12,0.22); }
+.ch:last-child { border-right:none; }
+.ch.c { text-align:center; }
+
+.rows { flex:1; overflow-y:auto; }
+.row { display:grid; border-bottom:1px solid rgba(60,48,6,0.55); cursor:pointer; transition:background .07s; min-height:36px; align-items:center; }
+.row:nth-child(odd)  { background:var(--bgrow1); }
+.row:nth-child(even) { background:var(--bgrow2); }
+.row:hover { background:var(--bghover); }
+.row.gf { border:1px solid var(--gold2); background:#141208; }
+
+.cell { padding:4px 8px; font-size:14px; color:var(--tw); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cell.c { text-align:center; }
+.cell.m { color:var(--tm); }
+.cell-sub { font-size:12px; color:var(--td); }
+
+/* footer */
+.footer { background:#0a0a08; border-top:1px solid var(--b1); padding:5px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.pag { display:flex; gap:3px; }
+.pg { min-width:22px; height:22px; background:#0a0a07; border:1px solid var(--gold2); color:var(--tg); font-size:11px; cursor:pointer; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family:inherit; font-weight:bold; padding:0 3px; outline:none; transition:background .1s; }
+.pg:hover { background:#1e1c0a; color:var(--goldbright); }
+.pg.on { background:#b89020; border-color:var(--goldbright); color:#080604; }
+
+/* buttons — Flyff Gold style: flat dark bg, solid gold border, gold text */
+.gb {
+  background: #0a0a07;
+  border: 1px solid var(--gold2);
+  color: var(--tg);
+  font-size: 13px;
+  padding: 4px 14px;
+  cursor: pointer;
+  border-radius: 2px;
+  font-family: inherit;
+  font-weight: bold;
+  letter-spacing: .02em;
+  transition: background .1s, color .1s;
+  white-space: nowrap;
+  outline: none;
+}
+.gb:hover {
+  background: #1e1c0a;
+  color: var(--goldbright);
+}
+.gb:active { background: #282408; }
+.gb:disabled { opacity: .35; cursor: not-allowed; }
+
+/* primary / confirm action — filled gold */
+.gb.bright {
+  background: #b89020;
+  border-color: var(--goldbright);
+  color: #080604;
+  font-weight: bold;
+}
+.gb.bright:hover { background: #caa028; color: #060402; }
+.gb.bright:active { background: #a07c18; }
+.gb.bright:disabled { opacity: .4; }
+
+/* danger */
+.gb.danger {
+  background: #0a0707;
+  border-color: rgba(180,60,60,.8);
+  color: var(--redt);
+  font-weight: normal;
+}
+.gb.danger:hover { background: #1a0808; color: #e88080; }
+
+/* small variant */
+.gb.sm { font-size: 11px; padding: 3px 9px; font-weight: bold; }
+
+/* inputs */
+.inf { background:var(--bginput); border:1px solid var(--b1); color:var(--tw); font-size:14px; padding:4px 7px; border-radius:2px; font-family:inherit; outline:none; }
+.inf:focus { border-color:var(--b2); }
+.inf.err { border-color:rgba(180,60,60,.8); }
+.sel { background:var(--bginput); border:1px solid var(--b1); color:var(--tw); font-size:14px; padding:4px 5px; border-radius:2px; font-family:inherit; outline:none; cursor:pointer; }
+.sel:focus { border-color:var(--b2); }
+.sel option { background:#0d0d0b; }
+.sel:disabled { opacity:.4; cursor:not-allowed; }
+
+/* form */
+.fsec { padding:12px 12px; border-bottom:1px solid rgba(60,48,6,.5); }
+.fsec-t { font-size:11px; font-weight:bold; color:var(--tc); margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid rgba(110,80,12,.3); }
+.frow { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px; }
+.frow:last-child { margin-bottom:0; }
+.fl { font-size:11px; color:var(--tw); white-space:nowrap; }
+.req { color:var(--redt); margin-left:1px; }
+
+/* role pills */
+.rpill { padding:3px 9px; border-radius:2px; border:1px solid var(--b1); background:#0e0e08; color:var(--tm); font-size:11px; cursor:pointer; transition:all .1s; user-select:none; }
+.rpill:hover { border-color:var(--b2); color:var(--tw); }
+.rpill.on { background:#181608; border-color:var(--gold2); color:var(--tg); }
+
+/* spinner */
+.spin { display:flex; align-items:center; gap:3px; }
+.spb { width:22px; height:22px; background:#0a0a07; border:1px solid var(--gold2); color:var(--tg); font-size:16px; cursor:pointer; border-radius:2px; display:flex; align-items:center; justify-content:center; line-height:1; font-family:inherit; font-weight:bold; outline:none; transition:background .1s; }
+.spb:hover { background:#1e1c0a; color:var(--goldbright); }
+.spv { min-width:22px; text-align:center; font-size:13px; color:var(--tg); font-weight:bold; }
+
+/* badges */
+.dbadge { font-size:12px; padding:1px 5px; border-radius:2px; border:1px solid; margin-left:4px; }
+.db-normal   { background:rgba(25,65,25,.35);  border-color:#285028; color:#68a868; }
+.db-hard     { background:rgba(100,65,10,.3);  border-color:#806010; color:#c09830; }
+.db-extrahard{ background:rgba(100,40,10,.3);  border-color:#803810; color:#c07828; }
+.db-nightmare{ background:rgba(90,20,90,.35);  border-color:#702070; color:#b060b0; }
+.db-cursed   { background:rgba(90,20,20,.35);  border-color:#702020; color:#b06060; }
+.db-infernal { background:rgba(60,10,10,.4);   border-color:#500808; color:#e03030; }
+.db-classic  { background:rgba(10,40,80,.35);  border-color:#184878; color:#5890c0; }
+
+.rbadge { font-size:12px; padding:1px 5px; border-radius:2px; border:1px solid; }
+.rb-tank    { background:rgba(20,50,90,.3);  border-color:#1a4870; color:#5888b8; }
+.rb-support { background:rgba(20,70,20,.3);  border-color:#186018; color:#58a858; }
+.rb-1v1     { background:rgba(90,20,20,.3);  border-color:#701818; color:#b05858; }
+.rb-aoe     { background:rgba(80,40,10,.3);  border-color:#683808; color:#a07030; }
+.rb-hybrid  { background:rgba(60,20,80,.3);  border-color:#501870; color:#9058a8; }
+
+/* diff colors for filter */
+.dc-normal    { color:#68a868; }
+.dc-hard      { color:#c09830; }
+.dc-extrahard { color:#c07828; }
+.dc-nightmare { color:#b060b0; }
+.dc-cursed    { color:#b06060; }
+.dc-infernal  { color:#e03030; }
+.dc-classic   { color:#5890c0; }
+
+/* notice */
+.notice { background:#0e0e08; border:1px solid var(--b1); padding:5px 9px; font-size:11px; color:var(--tc); margin:6px 0; border-radius:2px; }
+.notice.warn { border-color:rgba(150,50,50,.6); color:var(--redt); background:#0c0808; }
+
+/* status */
+.sdot2 { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:3px; vertical-align:middle; }
+.sdot-open { background:var(--green); }
+.sdot-full { background:var(--gold); }
+.stag-o { color:var(--green); font-size:11px; }
+.stag-f { color:var(--tg); font-size:11px; }
+
+/* slot chip */
+.schip { display:inline-flex; align-items:center; gap:4px; background:#0d0d0a; border:1px solid rgba(90,70,12,.5); border-radius:2px; padding:3px 7px; font-size:11px; }
+.schip.empty { border-style:dashed; opacity:.55; }
+
+/* modal */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.87); display:flex; align-items:center; justify-content:center; z-index:200; }
+.mwin { background:var(--bgwin); border:2px solid var(--b2); border-radius:3px; width:360px; overflow:hidden; box-shadow:0 8px 40px rgba(0,0,0,.9); }
+.mwin-t { background:#111008; border-bottom:1px solid var(--b2); padding:7px 12px; font-size:13px; font-weight:bold; color:var(--tg); }
+.mwin-b { padding:14px; }
+
+/* my group */
+.mgh { padding:12px 12px; background:#0a0a08; border-bottom:1px solid var(--b1); }
+.mgn { font-size:14px; font-weight:bold; color:var(--tg); }
+.mgm { font-size:11px; color:var(--tm); margin-top:2px; }
+
+.aprow { display:grid; grid-template-columns:1fr 80px 50px 50px 130px; align-items:center; padding:5px 12px; border-bottom:1px solid rgba(60,48,6,.4); font-size:14px; }
+.aprow:hover { background:var(--bghover); }
+
+/* dungeon select */
+.dsec { padding:3px 0; }
+.dcat-hd { padding:4px 8px; background:#0a0a08; border-bottom:1px solid rgba(90,68,10,.35); font-size:11px; font-weight:bold; color:var(--tc); cursor:pointer; display:flex; align-items:center; justify-content:space-between; user-select:none; }
+.dcat-hd:hover { background:#0f0e08; color:var(--tg); }
+.dgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:4px; padding:6px 8px; }
+.dopt { background:#0b0b09; border:1px solid rgba(80,60,10,.45); border-radius:2px; padding:5px 7px; cursor:pointer; transition:all .1s; }
+.dopt:hover { border-color:var(--b2); background:#111008; }
+.dopt.on { border-color:var(--gold2); background:#141208; }
+.dn { font-size:14px; color:var(--tw); }
+.dm { font-size:12px; color:var(--tm); margin-top:2px; }
+
+/* scrollable */
+.scrollable { overflow-y:auto; max-height:212px; }
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background:#080806; }
+::-webkit-scrollbar-thumb { background:#282408; border:1px solid var(--b1); border-radius:2px; }
+::-webkit-scrollbar-thumb:hover { background:#403810; }
+
+/* sel dungeon bar */
+.sdbar { padding:8px 12px; background:#0a0a08; border-bottom:1px solid var(--b1); display:flex; align-items:center; gap:12px; }
+.sdname { font-size:13px; font-weight:bold; color:var(--tg); }
+.sdmeta { font-size:11px; color:var(--tm); margin-top:2px; }
+
+.note-msg { padding:8px 12px; font-size:11px; color:var(--tm); background:#0a0a08; border-bottom:1px solid var(--b1); }
+
+/* --- DIFF FILTER CHIPS --- */
+.fchip { padding:3px 9px; border-radius:2px; border:1px solid var(--b1); background:#0d0d0a; color:var(--tm); font-size:11px; cursor:pointer; transition:all .1s; user-select:none; }
+.fchip:hover { border-color:var(--b2); color:var(--tw); }
+.fchip.on { background:#141208; border-color:var(--gold2); color:var(--tg); }
+</style>
+</head>
+<body>
+<div class="win" id="app">
+
+  <div class="tb">
+    <div class="tb-l">
+      <span class="tb-title">Dungeon Finder</span>
+      <span class="tb-sub">Designed by Eric | Kraftgesetz</span>
+    </div>
+    <div class="tb-r">
+      <span class="sdot"></span>Totemia
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" id="tab-browse" onclick="switchTab('browse')">Find Group</div>
+    <div class="tab" id="tab-create" onclick="switchTab('create')">Create Group</div>
+    <div class="tab" id="tab-mine"   onclick="switchTab('mine')">My Group</div>
+  </div>
+
+  <div id="main"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════ */
+
+// Difficulties per dungeon  (key -> label, min level, max level for that bracket)
+const DUNGEONS = [
+  { id:'lc',  name:'Leren Chasm',          difficulties:[
+    {key:'normal',    label:'Normal',     minLv:16,  maxLv:30},
+    {key:'hard',      label:'Hard',       minLv:31,  maxLv:60},
+    {key:'extrahard', label:'Extra Hard', minLv:61,  maxLv:90},
+    {key:'nightmare', label:'Nightmare',  minLv:91,  maxLv:120},
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'rc',  name:'Rhisis Catacombs',     difficulties:[
+    {key:'normal',    label:'Normal',     minLv:31,  maxLv:60},
+    {key:'extrahard', label:'Extra Hard', minLv:61,  maxLv:90},
+    {key:'nightmare', label:'Nightmare',  minLv:91,  maxLv:120},
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'ed',  name:'Envy Depths',          difficulties:[
+    {key:'normal',    label:'Normal',     minLv:61,  maxLv:90},
+    {key:'extrahard', label:'Extra Hard', minLv:91,  maxLv:120},
+    {key:'nightmare', label:'Nightmare',  minLv:121, maxLv:140},
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'gs',  name:'Guardiane Sanctuary',  difficulties:[
+    {key:'normal',    label:'Normal',     minLv:91,  maxLv:120},
+    {key:'nightmare', label:'Nightmare',  minLv:121, maxLv:140},
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'sp',  name:'Storm Peak',           difficulties:[
+    {key:'normal',    label:'Normal',     minLv:121, maxLv:140},
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'tw',  name:'The Wilds',            difficulties:[
+    {key:'cursed',    label:'Cursed',     minLv:141, maxLv:165},
+    {key:'infernal',  label:'Infernal',   minLv:166, maxLv:190},
+  ]},
+  { id:'aa',  name:"Ankou's Asylum",       difficulties:[
+    {key:'infernal',    label:'Infernal',     minLv:166, maxLv:190},
+  ]},
+  // Classic
+  { id:'vd',  name:'Volkane Dungeon',      difficulties:[{key:'classic',label:'Classic',minLv:120,maxLv:140}]},
+  { id:'ka',  name:'Kalgas Cave',          difficulties:[{key:'classic',label:'Classic',minLv:130,maxLv:165}]},
+  { id:'co',  name:'Catacombs of Anguish', difficulties:[{key:'classic',label:'Classic',minLv:120,maxLv:140}]},
+  { id:'mm',  name:'Mars Mine Dungeon',    difficulties:[{key:'classic',label:'Classic',minLv:70, maxLv:90}]},
+  { id:'dk',  name:'Dekane Mine',          difficulties:[{key:'classic',label:'Classic',minLv:60, maxLv:80}]},
+];
+
+const DIFF_META = {
+  normal:    {label:'Normal',     cls:'db-normal'},
+  hard:      {label:'Hard',       cls:'db-hard'},
+  extrahard: {label:'Extra Hard', cls:'db-extrahard'},
+  nightmare: {label:'Nightmare',  cls:'db-nightmare'},
+  cursed:    {label:'Cursed',     cls:'db-cursed'},
+  infernal:  {label:'Infernal',   cls:'db-infernal'},
+  classic:   {label:'Classic',    cls:'db-classic'},
+};
+const DIFF_ORDER = ['normal','hard','extrahard','nightmare','cursed','infernal','classic'];
+
+// Classes by job tier
+// tier 0 = beginner (Vagrant)  1 = first job  2 = second job  3 = third job
+const CLASSES = [
+  // First job (lv 15+)
+  {id:'me',  name:'Mercenary',   tier:1, minLv:15},
+  {id:'ac',  name:'Acrobat',     tier:1, minLv:15},
+  {id:'as',  name:'Assist',      tier:1, minLv:15},
+  {id:'ma',  name:'Magician',    tier:1, minLv:15},
+  // Second job (lv 60+)
+  {id:'kn',  name:'Knight',      tier:2, minLv:60},
+  {id:'bl',  name:'Blade',       tier:2, minLv:60},
+  {id:'je',  name:'Jester',      tier:2, minLv:60},
+  {id:'ra',  name:'Ranger',      tier:2, minLv:60},
+  {id:'bp',  name:'Billposter',  tier:2, minLv:60},
+  {id:'rm',  name:'Ringmaster',  tier:2, minLv:60},
+  {id:'el',  name:'Elementor',   tier:2, minLv:60},
+  {id:'ps',  name:'Psykeeper',   tier:2, minLv:60},
+  // Third job (lv 166+)
+  {id:'tc',  name:'Templar',         tier:3, minLv:166},
+  {id:'ts',  name:'Slayer',          tier:3, minLv:166},
+  {id:'ck',  name:'Crackshooter',    tier:3, minLv:166},
+  {id:'wh',  name:'Harlequin',       tier:3, minLv:166},
+  {id:'fm',  name:'Forcemaster',     tier:3, minLv:166},
+  {id:'se',  name:'Seraph',          tier:3, minLv:166},
+  {id:'ar',  name:'Arcanist',        tier:3, minLv:166},
+  {id:'ch',  name:'Mentalist',       tier:3, minLv:166},
+];
+
+// Support-capable classes only
+const SUPPORT_CLASSES = new Set(['as','rm','se']); // Assist, Ringmaster, Seraph, Billposter
+
+const ROLES = [
+  {key:'tank',    label:'Tank'},
+  {key:'support', label:'Support'},
+  {key:'1v1',     label:'1 vs 1'},
+  {key:'aoe',     label:'AoE'},
+];
+
+/* ═══════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════ */
+let S = {
+  tab: 'browse',
+  diffFilter: 'all',
+  lvlFilter: null,
+  catOpen: {reborn:true, classic:false},
+  groups: mkGroups(),
+  myGroup: null,
+  myApp: null,
+  form: {
+    dungeonId: null,
+    diffKey: null,
+    scheduledTime: '',
+    role: null,
+    slots: {tank:1, support:1, '1v1':1, aoe:0}
+  }
+};
+
+function mkGroups(){
+  return [
+    { id:'g1', dungeonId:'ed', diffKey:'nightmare', leaderName:'Ashenveil', leaderClass:'Elementor', minLv:121, scheduledTime:'20:00', featured:true,
+      slots:[{role:'tank',player:'Stormwind',cls:'Knight',filled:true},{role:'support',player:null,cls:null,filled:false},{role:'1v1',player:'Ashenveil',cls:'Elementor',filled:true},{role:'aoe',player:null,cls:null,filled:false}],
+      applicants:[{name:'Celeste',cls:'Ringmaster',role:'support',level:125,note:'Can heal and buff. Party Scroll available!'}]
+    },
+    { id:'g2', dungeonId:'gs', diffKey:'cursed', leaderName:'VoidStriker', leaderClass:'Psykeeper', minLv:141, scheduledTime:'21:30', featured:false,
+      slots:[{role:'tank',player:'IronVeil',cls:'Knight',filled:true},{role:'support',player:null,cls:null,filled:false},{role:'1v1',player:'VoidStriker',cls:'Psykeeper',filled:true},{role:'aoe',player:'Ember',cls:'Elementor',filled:true}],
+      applicants:[]
+    },
+    { id:'g3', dungeonId:'lc', diffKey:'normal', leaderName:'Sparkle', leaderClass:'Jester', leaderClassId:'je', minLv:16, featured:false,
+      slots:[{role:'support',player:null,cls:null,filled:false},{role:'1v1',player:'Sparkle',cls:'Jester',filled:true},{role:'1v1',player:null,cls:null,filled:false}],
+      applicants:[]
+    },
+    { id:'g4', dungeonId:'aa', diffKey:'infernal', leaderName:'DeathBlade', leaderClass:'Slayer', minLv:166, scheduledTime:'22:00', featured:false,
+      slots:[{role:'tank',player:'TempGuard',cls:'Templar',filled:true},{role:'support',player:'HolyLight',cls:'Seraph',filled:true},{role:'1v1',player:'DeathBlade',cls:'Slayer',filled:true},{role:'aoe',player:null,cls:null,filled:false}],
+      applicants:[]
+    },
+  ];
+}
+
+/* ═══════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════ */
+function getDng(id)  { return DUNGEONS.find(d=>d.id===id); }
+function getCls(id)  { return CLASSES.find(c=>c.id===id); }
+function getDiff(dk) { return DIFF_META[dk]||{label:dk,cls:''}; }
+
+function dbadge(dk){
+  const d=getDiff(dk);
+  return `<span class="dbadge ${d.cls}">${d.label}</span>`;
+}
+function rbadge(r){
+  return `<span class="rbadge rb-${r}">${ROLES.find(x=>x.key===r)?.label||r}</span>`;
+}
+
+// Filter classes valid for a given min level bracket
+function validClasses(minLv){
+  let maxTier = 0;
+  if(minLv >= 166) maxTier = 3;
+  else if(minLv >= 60) maxTier = 2;
+  else if(minLv >= 15) maxTier = 1;
+  // Show only classes up to maxTier, but NEVER show tier 0 (Vagrant)
+  // For infernal (166+) only show third job
+  if(minLv >= 166) return CLASSES.filter(c=>c.tier===3);
+  if(minLv >= 60)  return CLASSES.filter(c=>c.tier===2);
+  return CLASSES.filter(c=>c.tier===1);
+}
+
+function availRoles(classId){
+  if(!classId) return ROLES;
+  if(SUPPORT_CLASSES.has(classId)) return ROLES; // support classes can do all roles including support
+  return ROLES.filter(r=>r.key!=='support');
+}
+
+/* ═══════════════════════════════════════════════════
+   TAB SWITCH
+═══════════════════════════════════════════════════ */
+function switchTab(t){
+  S.tab=t;
+  ['browse','create','mine'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('on',x===t));
+  render();
+}
+function render(){
+  document.getElementById('main').innerHTML =
+    S.tab==='browse' ? renderBrowse() :
+    S.tab==='create' ? renderCreate() : renderMine();
+}
+
+/* ═══════════════════════════════════════════════════
+   BROWSE
+═══════════════════════════════════════════════════ */
+const BCOLS = 'grid-template-columns:2fr 110px 150px 140px 90px';
+
+function renderBrowse(){
+  const allDiffs = ['all',...DIFF_ORDER];
+  let groups = S.groups.filter(g=>{
+    if(S.diffFilter!=='all' && g.diffKey!==S.diffFilter) return false;
+    if(S.lvlFilter){
+      const [mn,mx]=S.lvlFilter;
+      if(g.minLv<mn||g.minLv>mx) return false;
+    }
+    return true;
+  });
+
+  const sideHtml = `
+    <div class="sb-hd" style="font-size:12px;padding-bottom:2px">Difficulty</div>
+    ${allDiffs.map(f=>{
+      const lbl=f==='all'?'All':DIFF_META[f]?.label||f;
+      const cnt=f==='all'?S.groups.length:S.groups.filter(g=>g.diffKey===f).length;
+      return `<div class="sb-item${S.diffFilter===f?' on':''}" onclick="S.diffFilter='${f}';S.lvlFilter=null;render()">
+        ${f==='all'?'All Groups':`<span class="dc-${f}">${lbl}</span>`}
+        ${cnt>0?`<span style="float:right;color:var(--td);font-size:12px">${cnt}</span>`:''}
+      </div>`;
+    }).join('')}
+    <div class="sb-sep"></div>
+    <div class="sb-hd" style="font-size:12px;padding-bottom:2px">Min. Level</div>
+    ${[{l:'1–60',mn:1,mx:60},{l:'61–120',mn:61,mx:120},{l:'121–165',mn:121,mx:165},{l:'166+',mn:166,mx:999}].map(r=>`
+      <div class="sb-item${S.lvlFilter&&S.lvlFilter[0]===r.mn?' on':''}" onclick="S.lvlFilter=[${r.mn},${r.mx}];S.diffFilter='all';render()">${r.l}</div>`).join('')}
+  `;
+
+  let rowsHtml='';
+  if(!groups.length){
+    rowsHtml=`<div style="padding:40px;text-align:center;color:var(--tm)">No groups found.<br><br><button class="gb bright" onclick="switchTab('create')">Create Group</button></div>`;
+  } else {
+    groups.forEach(g=>{
+      const d=getDng(g.dungeonId);
+      const filled=g.slots.filter(s=>s.filled).length;
+      const total=g.slots.length;
+      const full=filled>=total;
+      rowsHtml+=`<div class="row" style="${BCOLS}" onclick="openDetail('${g.id}')">
+        <div class="cell">
+          ${d?.name||'?'}
+          <div class="cell-sub">${d?.difficulties.find(x=>x.key===g.diffKey)?.minLv||''}–${d?.difficulties.find(x=>x.key===g.diffKey)?.maxLv||''} Lv.</div>
+        </div>
+        <div class="cell c">${dbadge(g.diffKey)}</div>
+        <div class="cell">${g.leaderName} <span class="m">(${g.leaderClass})</span></div>
+        <div class="cell c" style="letter-spacing:2px">
+          ${g.slots.map(s=>`<span style="color:${s.filled?'var(--green)':'var(--td)'}">${s.filled?'●':'○'}</span>`).join('')}
+          <span style="color:var(--tm);font-size:12px;letter-spacing:0;margin-left:3px">${filled}/${total}</span>
+        </div>
+        <div class="cell c">
+          ${g.scheduledTime
+            ? `<span style="color:var(--tg);font-size:13px;font-weight:bold">${g.scheduledTime}</span>`
+            : `<span style="color:var(--td);font-size:11px">–</span>`}
+        </div>
+      </div>`;
+    });
+  }
+
+  return `<div class="layout">
+    <div class="sidebar">${sideHtml}</div>
+    <div class="main">
+      <div class="colhdr" style="${BCOLS}">
+        <div class="ch" style="padding-left:12px">Dungeon</div>
+        <div class="ch c">Difficulty</div>
+        <div class="ch">Leader</div>
+        <div class="ch c">Slots</div>
+        <div class="ch c">Start Time</div>
+      </div>
+      <div class="rows">${rowsHtml}</div>
+      <div class="footer">
+        <div class="pag">
+          <button class="pg">◀◀</button><button class="pg">◀</button>
+          <button class="pg on">1</button>
+          <button class="pg">▶</button><button class="pg">▶▶</button>
+        </div>
+        <span style="font-size:11px;color:var(--tm)">Total: ${groups.length} groups</span>
+        <button class="gb sm" onclick="render()">↻ Refresh</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════════════════════════════
+   DETAIL MODAL
+═══════════════════════════════════════════════════ */
+function openDetail(gid){
+  const g=S.groups.find(x=>x.id===gid); if(!g) return;
+  const d=getDng(g.dungeonId);
+  const diff=d?.difficulties.find(x=>x.key===g.diffKey);
+  const filled=g.slots.filter(s=>s.filled).length;
+  const full=filled>=g.slots.length;
+  const canApply=!S.myGroup&&!S.myApp&&!full;
+
+  const slotsHtml=g.slots.map(s=>`<div class="schip${s.filled?'':' empty'}">
+    ${rbadge(s.role)}
+    ${s.filled?`<span style="font-size:11px">${s.player}</span><span style="font-size:12px;color:var(--tm)">(${s.cls})</span>`:'<span style="font-size:12px;color:var(--td)">Open</span>'}
+  </div>`).join('');
+
+  const ov=document.createElement('div');
+  ov.className='overlay'; ov.id='gmodal';
+  ov.innerHTML=`<div class="mwin">
+    <div class="mwin-t">Group Details — ${d?.name||''}</div>
+    <div class="mwin-b">
+      <table style="width:100%;font-size:11px;color:var(--tm);margin-bottom:12px;border-collapse:collapse">
+        <tr><td style="padding:2px 0;width:80px">Dungeon:</td><td style="color:var(--tw)">${d?.name||''} ${dbadge(g.diffKey)}</td></tr>
+        <tr><td>Level:</td><td style="color:var(--tw)">${diff?.minLv||''}–${diff?.maxLv||''}</td></tr>
+        <tr><td>Leader:</td><td style="color:var(--tw)">${g.leaderName} (${g.leaderClass})</td></tr>
+        <tr><td>Start Time:</td><td style="color:var(--tg);font-weight:bold">${g.scheduledTime||'–'}</td></tr>
+      </table>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--tm);margin-bottom:5px">Slots (${filled}/${g.slots.length}):</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${slotsHtml}</div>
+      </div>
+      ${canApply?`
+        <div style="border-top:1px solid rgba(90,68,10,.4);padding-top:12px;margin-top:4px">
+          <div class="fsec-t" style="margin-bottom:8px">Apply</div>
+          <div class="frow" style="margin-bottom:8px">
+            <span class="fl">Role<span class="req">*</span>:</span>
+            <div id="mr" style="display:flex;gap:4px;flex-wrap:wrap">
+              ${ROLES.map((r,i)=>`<span class="rpill${i===0?' on':''}" data-role="${r.key}" onclick="selMR(this)">${r.label}</span>`).join('')}
+            </div>
+          </div>
+          <div class="frow" style="margin-bottom:12px;align-items:flex-start">
+            <span class="fl" style="margin-top:4px">Note:</span>
+            <textarea class="inf" id="mnote" placeholder="e.g. Have Party Scroll, 1m+ DPS..." style="flex:1;height:54px;resize:vertical;font-size:12px"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="gb bright" style="flex:1" onclick="submitApply('${gid}')">Apply</button>
+          <button class="gb" onclick="closeModal()">Close</button>
+        </div>
+      `:`<div style="display:flex;gap:6px;margin-top:8px">
+        ${full?`<div class="notice" style="flex:1;text-align:center">Group is full.</div>`:
+          S.myApp?`<div class="notice" style="flex:1;text-align:center">Application already sent.</div>`:
+          S.myGroup?`<div class="notice" style="flex:1;text-align:center">You are already leading a group.</div>`:''}
+        <button class="gb" onclick="closeModal()">Close</button>
+      </div>`}
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)closeModal();});
+}
+
+function selMR(el){ document.querySelectorAll('#mr .rpill').forEach(b=>b.classList.remove('on')); el.classList.add('on'); }
+function closeModal(){ const m=document.getElementById('gmodal'); if(m)m.remove(); }
+
+function submitApply(gid){
+  const role=document.querySelector('#mr .rpill.on')?.dataset?.role;
+  const note=document.getElementById('mnote')?.value?.trim()||'';
+  if(!role){alert('Please select a role.');return;}
+  const g=S.groups.find(x=>x.id===gid);
+  if(g){g.applicants.push({name:'[Your Character]',cls:'–',role,level:'–',note});S.myApp={groupId:gid};}
+  closeModal();render();
+}
+
+/* ═══════════════════════════════════════════════════
+   CREATE
+═══════════════════════════════════════════════════ */
+function renderCreate(){
+  const f=S.form;
+  const sd=getDng(f.dungeonId);
+  const diff=sd?.difficulties.find(x=>x.key===f.diffKey);
+  const minLv=diff?.minLv||1;
+  const total=Object.values(f.slots).reduce((a,b)=>a+b,0);
+  const canCreate=f.dungeonId&&f.diffKey&&f.scheduledTime&&f.role&&total>=2&&total<=8;
+
+  const reborn=['lc','rc','ed','gs','sp','tw','aa'];
+  const classic=['vd','ka','co','mm','dk'];
+
+  // Dungeon section
+  let dungSec='';
+  if(sd&&f.diffKey){
+    dungSec=`<div class="sdbar">
+      <div style="flex:1">
+        <div><span class="sdname">${sd.name}</span> ${dbadge(f.diffKey)}</div>
+        <div class="sdmeta">Lv. ${diff?.minLv||''}–${diff?.maxLv||''} · Solo & Party · Cooldown: 1h</div>
+      </div>
+      <button class="gb sm" onclick="S.form.dungeonId=null;S.form.diffKey=null;render()">Change</button>
+    </div>`;
+  } else {
+    // Step 1a: choose dungeon
+    const catOrder=[{key:'reborn',label:'Reborn / Instance',ids:reborn},{key:'classic',label:'Classic Dungeons',ids:classic}];
+    let grid='';
+    catOrder.forEach(cat=>{
+      const open=S.catOpen[cat.key];
+      grid+=`<div class="dcat-hd" onclick="S.catOpen['${cat.key}']=!S.catOpen['${cat.key}'];render()">
+        <span>${cat.label}</span><span style="color:var(--td)">${open?'▲':'▼'}</span>
+      </div>`;
+      if(open){
+        grid+=`<div class="dgrid">`;
+        cat.ids.forEach(did=>{
+          const d=getDng(did);
+          if(!d)return;
+          const minD=d.difficulties[0]?.minLv;
+          grid+=`<div class="dopt${f.dungeonId===did?' on':''}" onclick="selDng('${did}')">
+            <div class="dn">${d.name}</div>
+            <div class="dm">from Lv. ${minD}</div>
+          </div>`;
+        });
+        grid+=`</div>`;
+      }
+    });
+    dungSec=`<div class="scrollable">${grid}</div>`;
+
+    // Step 1b: choose difficulty (shown only when dungeon selected)
+    if(f.dungeonId){
+      const avDiffs=sd.difficulties;
+      dungSec+=`<div style="padding:8px 12px;border-top:1px solid rgba(60,48,6,.4)">
+        <div class="fl" style="margin-bottom:6px">Difficulty<span class="req">*</span>:</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${avDiffs.map(d=>`<span class="fchip${f.diffKey===d.key?' on':''}" onclick="selDiff('${d.key}')">${d.label} <span style="font-size:12px;color:var(--tm)">(${d.minLv}–${d.maxLv})</span></span>`).join('')}
+        </div>
+      </div>`;
+    }
+  }
+
+  // Classes valid for current level bracket
+  const valCls=sd&&diff?validClasses(minLv):[];
+  const classOpts=valCls.map(c=>`<option value="${c.id}" ${f.classId===c.id?'selected':''}>${c.name}</option>`).join('');
+
+  return `
+    <div class="fsec">
+      <div class="fsec-t">1 — Select Dungeon & Difficulty</div>
+      ${dungSec}
+    </div>
+    <div class="fsec">
+      <div class="fsec-t">2 — Your Role & Start Time</div>
+      <div class="frow">
+        <span class="fl">Your Role<span class="req">*</span>:</span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          ${ROLES.map(r=>`<span class="rpill${f.role===r.key?' on':''}" onclick="S.form.role='${r.key}';render()">${r.label}</span>`).join('')}
+        </div>
+      </div>
+      <div class="frow">
+        <span class="fl">Start Time<span class="req">*</span>:</span>
+        <input class="inf" type="time" style="width:110px" value="${f.scheduledTime||''}" onchange="S.form.scheduledTime=this.value;render()">
+        <span style="font-size:11px;color:var(--tm)">Planned start time for the dungeon run</span>
+      </div>
+    </div>
+    <div class="fsec">
+      <div class="fsec-t">3 — Slots Needed</div>
+      <div class="frow">
+        ${ROLES.map(r=>`
+          <span class="fl">${r.label}:</span>
+          <div class="spin">
+            <button class="spb" onclick="chSl('${r.key}',-1)">−</button>
+            <span class="spv">${f.slots[r.key]||0}</span>
+            <button class="spb" onclick="chSl('${r.key}',1)">+</button>
+          </div>`).join('<span style="margin:0 6px;color:var(--td)">|</span>')}
+        <span style="margin-left:12px;font-size:11px;color:var(--tm)">Total: <b style="color:var(--tg)">${total}</b></span>
+      </div>
+      ${total<2?`<div class="notice warn">At least 2 slots required.</div>`:''}
+      ${total>8?`<div class="notice warn">Maximum 8 slots allowed.</div>`:''}
+    </div>
+    <div class="footer">
+      <button class="gb bright" onclick="createGroup()" ${canCreate?'':'disabled'}>Create Group</button>
+      <button class="gb" onclick="resetForm()">Reset</button>
+      <span style="font-size:11px;color:var(--tm);margin-left:auto">${canCreate?'✓ Ready':'Fill in all required fields'}</span>
+    </div>`;
+}
+
+function selDng(did){
+  S.form.dungeonId=did;
+  S.form.diffKey=null;
+  S.form.classId=null;
+  S.form.role=null;
+  render();
+}
+function selDiff(dk){
+  S.form.diffKey=dk;
+  S.form.classId=null;
+  S.form.role=null;
+  render();
+}
+function updFCls(id){
+  S.form.classId=id||null;
+  const cls=CLASSES.find(c=>c.id===id);
+  const roles=cls?availRoles(cls.id):[];
+  if(S.form.role&&!roles.find(r=>r.key===S.form.role)) S.form.role=null;
+  render();
+}
+function chSl(r,d){
+  const v=(S.form.slots[r]||0)+d;
+  if(v<0||v>4)return;
+  S.form.slots[r]=v;
+  render();
+}
+function resetForm(){
+  S.form={dungeonId:null,diffKey:null,scheduledTime:'',role:null,slots:{tank:1,support:1,'1v1':1,aoe:0}};
+  render();
+}
+
+function createGroup(){
+  const f=S.form;
+  if(!f.dungeonId||!f.diffKey||!f.scheduledTime||!f.role)return;
+  const d=getDng(f.dungeonId);
+  const slots=[];
+  ROLES.forEach(r=>{
+    const cnt=f.slots[r.key]||0;
+    for(let i=0;i<cnt;i++){
+      const isLeader=r.key===f.role&&!slots.find(s=>s.role===r.key&&s.filled);
+      slots.push({role:r.key,player:isLeader?'[You]':null,cls:isLeader?'–':null,filled:isLeader});
+    }
+  });
+  if(!slots.find(s=>s.filled)){const m=slots.find(s=>s.role===f.role)||slots[0];if(m){m.player='[You]';m.cls='–';m.filled=true;}}
+  S.myGroup={id:'my'+Date.now(),dungeonId:f.dungeonId,diffKey:f.diffKey,leaderName:'[Your Character]',leaderClass:'–',minLv:0,scheduledTime:f.scheduledTime,featured:false,slots,applicants:[]};
+  S.groups.unshift(S.myGroup);
+  switchTab('mine');
+}
+
+/* ═══════════════════════════════════════════════════
+   MINE
+═══════════════════════════════════════════════════ */
+function renderMine(){
+  if(!S.myGroup) return `<div style="padding:60px;text-align:center;color:var(--tm)">
+    <div style="font-size:28px;margin-bottom:12px;opacity:.25">⚔</div>
+    No active group.<br><br>
+    <button class="gb bright" onclick="switchTab('create')">Create Group</button>
+  </div>`;
+
+  const g=S.myGroup;
+  const d=getDng(g.dungeonId);
+  const diff=d?.difficulties.find(x=>x.key===g.diffKey);
+  const filled=g.slots.filter(s=>s.filled).length;
+  const total=g.slots.length;
+
+  const slotsHtml=g.slots.map(s=>`<div class="schip${s.filled?'':' empty'}">
+    ${rbadge(s.role)}
+    ${s.filled
+      ?`<span style="font-size:11px;margin-left:2px">${s.player}</span><span style="font-size:12px;color:var(--tm)">(${s.cls})</span>
+        ${s.player!==g.leaderName?`<button onclick="kickPlayer('${s.player}')" style="margin-left:3px;background:none;border:none;color:#804040;font-size:13px;cursor:pointer;padding:0;line-height:1">✕</button>`:''}`
+      :`<span style="font-size:12px;color:var(--td);margin-left:2px">Open</span>`}
+  </div>`).join('');
+
+  const appRows=g.applicants.length===0
+    ?`<div style="padding:12px 0;color:var(--tm);font-size:11px">No applications yet. Group is publicly visible.</div>`
+    :`<div class="colhdr" style="grid-template-columns:1fr 70px 1fr 130px;margin-top:6px">
+        <div class="ch" style="padding-left:12px">Character</div>
+        <div class="ch c">Role</div>
+        <div class="ch">Note</div>
+        <div class="ch c">Action</div>
+      </div>
+      ${g.applicants.map(a=>`<div style="display:grid;grid-template-columns:1fr 70px 1fr 130px;align-items:center;padding:5px 10px;border-bottom:1px solid rgba(60,48,6,.4);font-size:12px" class="aprow">
+        <div>${a.name}</div>
+        <div style="text-align:center">${rbadge(a.role)}</div>
+        <div style="font-size:12px;color:var(--tm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.note||''}">${a.note||'–'}</div>
+        <div style="display:flex;gap:4px">
+          <button class="gb bright sm" onclick="acceptApp('${a.name}','${a.cls||'–'}','${a.role}')">Accept</button>
+          <button class="gb sm danger" onclick="rejectApp('${a.name}')">Decline</button>
+        </div>
+      </div>`).join('')}`;
+
+  return `
+    <div class="mgh">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="mgn">${d?.name||''} ${dbadge(g.diffKey)}
+            <span class="sdot2 sdot-open" style="margin-left:8px"></span>
+            <span class="stag-o">Open</span>
+          </div>
+          <div class="mgm">Leader: ${g.leaderName} · ${filled}/${total} slots filled · Start Time: <b style="color:var(--tg)">${g.scheduledTime||'–'}</b></div>
+        </div>
+        <button class="gb sm danger" onclick="disbandGroup()">Disband Group</button>
+      </div>
+    </div>
+    <div style="padding:12px 12px;border-bottom:1px solid rgba(60,48,6,.5)">
+      <div style="font-size:11px;font-weight:bold;color:var(--tc);margin-bottom:7px">Current Members</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">${slotsHtml}</div>
+    </div>
+    <div style="padding:12px 12px">
+      <div style="font-size:11px;font-weight:bold;color:var(--tc);margin-bottom:4px">Applications (${g.applicants.length})</div>
+      ${appRows}
+    </div>`;
+}
+
+function acceptApp(name,cls,role){
+  if(!S.myGroup)return;
+  const slot=S.myGroup.slots.find(s=>s.role===role&&!s.filled);
+  if(slot){slot.player=name;slot.cls=cls;slot.filled=true;}
+  S.myGroup.applicants=S.myGroup.applicants.filter(a=>a.name!==name);
+  const gi=S.groups.findIndex(g=>g.id===S.myGroup.id);
+  if(gi>=0)S.groups[gi]=S.myGroup;
+  render();
+}
+function rejectApp(name){
+  if(!S.myGroup)return;
+  S.myGroup.applicants=S.myGroup.applicants.filter(a=>a.name!==name);
+  render();
+}
+function kickPlayer(name){
+  if(!S.myGroup)return;
+  const s=S.myGroup.slots.find(x=>x.player===name);
+  if(s){s.player=null;s.cls=null;s.filled=false;}
+  render();
+}
+function disbandGroup(){
+  S.groups=S.groups.filter(g=>g.id!==S.myGroup?.id);
+  S.myGroup=null;
+  switchTab('browse');
+}
+
+// init
+render();
+</script>
+</body>
+</html>
