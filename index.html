@@ -498,7 +498,7 @@ function renderBrowse(){
     <div class="sb-sep"></div>
     <div class="sb-hd" style="font-size:12px;padding-bottom:2px">Min. Level</div>
     ${[{l:'1–60',mn:1,mx:60},{l:'61–120',mn:61,mx:120},{l:'121–165',mn:121,mx:165},{l:'166+',mn:166,mx:999}].map(r=>`
-      <div class="sb-item${S.lvlFilter&&S.lvlFilter[0]===r.mn?' on':''}" onclick="S.lvlFilter=[${r.mn},${r.mx}];S.diffFilter='all';render()">${r.l}</div>`).join('')}
+      <div class="sb-item${S.lvlFilter&&S.lvlFilter[0]===r.mn?' on':''}" onclick="S.lvlFilter=[${r.mn},${r.mx}];S.diffFilter='all';render()">Lv. ${r.l}</div>`).join('')}
   `;
 
   let rowsHtml='';
