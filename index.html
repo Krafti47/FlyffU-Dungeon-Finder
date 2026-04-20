@@ -491,7 +491,7 @@ function renderBrowse(){
       const lbl=f==='all'?'All':DIFF_META[f]?.label||f;
       const cnt=f==='all'?S.groups.length:S.groups.filter(g=>g.diffKey===f).length;
       return `<div class="sb-item${S.diffFilter===f?' on':''}" onclick="S.diffFilter='${f}';S.lvlFilter=null;render()">
-        ${f==='all'?'All Groups':`<span class="dc-${f}">${lbl}</span>`}
+        ${f==='all'?'All Groups':`<span>${lbl}</span>`}
         ${cnt>0?`<span style="float:right;color:var(--td);font-size:12px">${cnt}</span>`:''}
       </div>`;
     }).join('')}
